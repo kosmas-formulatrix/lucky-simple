@@ -34,6 +34,22 @@
 	<!-- coba ga pake push back, gagal-->
   
 	<target name="pushVersion" depends="init">
+		<exec program="git.exe" commandline="commit -am &quot;Updating version ${CCNetLabel} &quot;" />
+		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
+		<exec program="git.exe" commandline="rev-parse HEAD" resultproperty="LatestChangeset" />
+		
+		<echo message="***************    RESULT  = ${LatestChangeset}" />
+		<!--
+		<exec program="git.exe" commandline="rev-parse HEAD" output="${CCNetWorkingDirectory}/LatestChangeset.txt" />
+		<loadfile file="${CCNetWorkingDirectory}/LatestChangeset.txt" property="Temp" />
+		<property name="LatestChangeset" value="${string::trim-end(Temp)}" />
+		
+		<xmlpoke file="C:/Program Files (x86)/CruiseControl.NET/server/${CCNetProject}.state" xpath="/IntegrationResult/SourceControl[@name = 'commit']/@value" value="${LatestChangeset}" />
+		<xmlpoke file="C:/Program Files (x86)/CruiseControl.NET/server/${CCNetProject}.state" xpath="/IntegrationResult/Parameters/NameValuePair[@name = '$LastChangeNumber']/@value" value="${LatestChangeset}" />
+		<touch file="C:/Program Files (x86)/CruiseControl.NET/server/ccnet.config" />	
+ -->
+	</target>
+	<target name="pushBack" depends="init">
 		<!--
 		<exec program="git.exe" commandline="checkout ${Git.branch}" />
 		<exec program="git.exe" commandline="pull origin ${Git.branch}" />
