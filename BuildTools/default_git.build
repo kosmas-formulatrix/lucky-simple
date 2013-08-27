@@ -28,16 +28,13 @@
     <echo message="updating version ..." />
     <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${CCNetWorkingDirectory}/AssemblyInfo.cs -o ${CCNetWorkingDirectory}/AssemblyInfo.cs" />
     <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Fixed -i ${CCNetWorkingDirectory}/AssemblyInfo.cs -w " output="${CCNetWorkingDirectory}/nextRelease.txt"/>
-	<call target="PushBack" />
   </target>
 
 	<!-- coba ga pake push back, gagal-->
   
 	<target name="PushBack" depends="init">
-		<!--
 		<exec program="git.exe" commandline="checkout ${Git.branch}" />
 		<exec program="git.exe" commandline="pull origin ${Git.branch}" />
-		-->
 		<exec program="git.exe" commandline="status" />
 		<exec program="git.exe" commandline="commit -am &quot;Update to version ${CCNetLabel}&quot;" />
 		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
