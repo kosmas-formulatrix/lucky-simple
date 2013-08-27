@@ -32,9 +32,15 @@
 
 
 	<target name="PushBack" depends="init">
+	
+		<exec program="git.exe" commandline="checkout ${Git.branch}" failonerror="false" />
+		<exec program="git.exe" commandline="commit -am -f 'Update to version ${CCNetLabel}'" />
+		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
+<!--
 		<exec program="git.exe" commandline="checkout LuckySimple-${CCNetLabel}" failonerror="false" />
 		<exec program="git.exe" commandline="branch -f ${Git.branch} HEAD" />
 		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
+		-->
 	</target>
  
 </project>
