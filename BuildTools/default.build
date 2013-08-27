@@ -1,0 +1,219 @@
+<project name="Formulatrix" default="products" xmlns="http://nant.sf.net/release/0.85/nant.xsd" >
+
+  <!-- Framework version -->
+  <property name="nant.settings.currentframework" value="net-3.5" />
+
+  <target name="init">
+    <tstamp />
+
+    <!-- StarTeam configuration -->
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'StarTeam.home']/@value" property="StarTeam.home" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'StarTeam.url']/@value" property="StarTeam.url" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NSIS.home']/@value" property="NSIS.home" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'Signtool.home']/@value" property="Signtool.home" />
+    <property name="StarTeam.viewstart" value="${string::last-index-of(StarTeam.url,'/')+1}" overwrite="false" />
+    <property name="StarTeam.view" value="${string::substring(StarTeam.url,int::parse(StarTeam.viewstart),string::get-length(StarTeam.url)-int::parse(StarTeam.viewstart))}" overwrite="false" />
+
+    <!-- Build directories -->
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'Source.Dir']/@value" property="Source.Dir" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'Staging.Dir']/@value" property="Staging.Dir" />
+
+    <mkdir dir="${Staging.Dir}" />
+
+    <!-- Build configuration -->
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'Configuration']/@value" property="Configuration" />
+
+    <!-- report our choices to the user -->
+    <echo message="" />
+    <echo message="" />
+    <echo message="Configuration = ${Configuration}" />
+    <echo message="Source.Dir = ${Source.Dir}" />
+    <echo message="Staging.Dir = ${Staging.Dir}" />
+    <echo message="StarTeam.view = ${StarTeam.view}" />
+    <echo message="" />
+  </target>
+
+  <target name="nightlybuild" depends="updateversion,buildlatest" />
+
+  <target name="publish.nightlybuild" depends="nightlybuild,distribute,website.development" />
+  <target name="publish.releasebuild" depends="nightlybuild,distribute,website.release" />
+
+  <target name="updateversion" depends="init">
+    <echo message="updating version ..." />
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="co -o -l -p ${StarTeam.url}/NT8.UI.Win32/Properties AssemblyInfo.cs" />
+    <exec program="c:\Program Files\UpdateVersion\bin\UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${Source.Dir}/NT8.UI.Win32/Properties/AssemblyInfo.cs -o ${Source.Dir}/NT8.UI.Win32/Properties/AssemblyInfo.cs" />
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="ci -o -u -p ${StarTeam.url}/NT8.UI.Win32/Properties AssemblyInfo.cs" />
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="co -o -l -p ${StarTeam.url}/NT8.UI.WPF/Properties AssemblyInfo.cs" />
+    <exec program="c:\Program Files\UpdateVersion\bin\UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${Source.Dir}/NT8.UI.WPF/Properties/AssemblyInfo.cs -o ${Source.Dir}/NT8.UI.WPF/Properties/AssemblyInfo.cs" />
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="ci -o -u -p ${StarTeam.url}/NT8.UI.WPF/Properties AssemblyInfo.cs" />
+  </target>
+
+  <target name="buildlatest" depends="init" description="Builds the latest source from StarTeam.">
+    <call target="clean" />
+    <call target="build" />
+  </target>
+
+  <target name="build" depends="init,NT8" description="Builds all source on drive."  />
+
+  <target name="distribute" depends="init,dist.products" description="Builds fresh install / upgrade scripts for all products."  />
+
+  <target name="clean" depends="init" description="Delete all previously compiled binaries.">
+    <delete>
+      <fileset basedir="${Source.Dir}">
+        <include name="**/bin/**" />
+        <include name="**/obj/**" />
+        <include name="**/${Configuration}/**" />
+      </fileset>
+    </delete>
+    <delete>
+      <fileset basedir="${Staging.Dir}/${StarTeam.view}">
+        <include name="Virgin/**" />
+        <include name="Update/**" />
+        <include name="Release/**" />
+        <include name="Source/**" />
+      </fileset>
+    </delete>
+  </target>
+
+  <target name="deepclean" depends="init" description="Remove all files under the Formulatrix directory.">
+    <delete includeemptydirs="true">
+      <fileset basedir="${Source.Dir}" defaultexcludes="false">
+        <include name="**" />
+        <exclude name="BuildTools/**" />
+      </fileset>
+    </delete>
+    <delete includeemptydirs="true">
+      <fileset basedir="${Staging.Dir}/${StarTeam.view}" defaultexcludes="false">
+        <include name="Virgin/**" />
+        <include name="Update/**" />
+        <include name="Release/**" />
+        <include name="Source/**" />
+      </fileset>
+    </delete>
+  </target>
+
+  <target name="checkout" depends="init" description="Checks out the latest source in StarTeam.">
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="co -is -q -stop -o -p ${StarTeam.url}" />
+  </target>
+
+  <target name="NT8" depends="init" description="Build NT8.">
+    <msbuild project="${Source.Dir}/NT8.sln">
+      <arg value="/p:Configuration=${Configuration}" />
+    </msbuild>
+    <!-- NUnit SCRIPT -->
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NUnitExecutable']/@value" property="NUnitExecutable" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NUnitProjectFile']/@value" property="NUnitProjectFile" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NUnitResultFile']/@value" property="NUnitResultFile" />
+    <if test="${file::exists(NUnitProjectFile)}">
+      <exec program="${NUnitExecutable}" workingdir="${Staging.Dir}\${StarTeam.view}" >
+        <arg value="${NUnitProjectFile}" />
+        <arg value="/xml:${NUnitResultFile}" />
+        <arg value="/nologo" />
+      </exec>
+    </if>
+    <!-- NCover SCRIPT -->
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NCoverExecutable']/@value" property="NCoverExecutable" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NCoverExplorerExecutable']/@value" property="NCoverExplorerExecutable" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NCoverProjectFile']/@value" property="NCoverProjectFile" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NCoverCoverageFile']/@value" property="NCoverCoverageFile" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'NCoverExplorerResultFile']/@value" property="NCoverExplorerResultFile" />
+    <if test="${file::exists(NCoverProjectFile)}">
+      <exec program="${NCoverExecutable}" workingdir="${Staging.Dir}\${StarTeam.view}">
+        <arg value="//cr" />
+        <arg value="${NCoverProjectFile}" />
+      </exec>
+      <exec program="${NCoverExplorerExecutable}" workingdir="${Staging.Dir}\${StarTeam.view}">
+        <arg value="${NCoverCoverageFile}" />
+        <arg value="/x:${NCoverExplorerResultFile}" />
+        <arg value="/r:ModuleClassFunctionSummary" />
+        <arg value="/p:Formulatrix.Common" />
+      </exec>
+    </if>
+    <!--SOURCE MONITOR SCRIPT-->
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'SMExecutable']/@value" property="SMExecutable" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'SMReportParserExecutable']/@value" property="SMReportParserExecutable" />
+    <xmlpeek file="build.config" xpath="/configuration/appSettings/add[@key = 'SMResultFile']/@value" property="SMResultFile" />
+    <echo message="Alternative 1: NANT Create-Checkpoint-Alternative-1"/>
+    <copy file="C:\SourceMonitorParser\TestProject.Smp" tofile="${Staging.Dir}\${StarTeam.view}\TestProject.Smp" overwrite="true"/>
+    <copy file="C:\SourceMonitorParser\SMCommand.xml" tofile="${Staging.Dir}\${StarTeam.view}\Command.xml" overwrite="true">
+      <filterchain>
+        <replacetokens>
+          <token key="PROJECT_FILE" value="${Staging.Dir}\${StarTeam.view}\TestProject.Smp" />
+          <token key="SOURCE_DIRECTORY" value="${Source.Dir}" />
+          <token key="CHECKPOINT_NAME" value="Baseline" />
+          <token key="EXPORT_FILE_TO" value="${SMResultFile}" />
+        </replacetokens>
+      </filterchain>
+    </copy>
+    <if test="${file::exists(SMExecutable)}">
+      <exec program="${SMExecutable}" workingdir=".">
+        <arg value="/C" />
+        <arg value="${Staging.Dir}\${StarTeam.view}\Command.xml" />
+      </exec>
+      <delete file="${Staging.Dir}\${StarTeam.view}\Command.xml"/>
+      <delete file="${Staging.Dir}\${StarTeam.view}\TestProject.Smp"/>
+      <exec program="${SMReportParserExecutable}">
+        <arg value="/C"/>
+        <arg value="${SMResultFile}"/>
+        <!--Put Complexity Threshold value here-->
+        <arg value="/CT:10"/>
+        <!--Put Statements Threshold value here-->
+        <arg value="/ST:80"/>
+        <!--Put value of N to generate N-Most Complex Method here-->
+        <arg value="/NC:25"/>
+        <!--Put value of N to generate N-Longest Method here-->
+        <arg value="/NS:25"/>
+      </exec>
+      <!-- END of SOURCE MONITOR SCRIPT -->
+    </if>
+  </target>
+
+  <target name="dist.products" depends="init,NT8" description="Create setup package.">
+    <mkdir dir="${Staging.Dir}/${StarTeam.view}/Update" />
+    <zip zipfile="${Staging.Dir}/${StarTeam.view}/Update/NT8.zip">
+      <fileset basedir="${Source.Dir}/NT8.UI.Win32/bin/${Configuration}" failonempty="true">
+        <include name="NT8.UI.Win32.exe" />
+        <include name="NT8.UI.Win32.pdb" />
+        <include name="NT8.UI.Win32.exe.config" />
+      </fileset>
+	  <fileset basedir="${Source.Dir}/NT8.UI.WPF/bin/${Configuration}" failonempty="true">
+        <include name="**" />
+      </fileset>
+    </zip>
+	<zip zipfile="${Staging.Dir}/${StarTeam.view}/Update/NT8_bin_only.zip">
+      <fileset basedir="${Source.Dir}/NT8.UI.Win32/bin/${Configuration}" failonempty="true">
+        <include name="NT8.UI.Win32.exe" />
+        <include name="NT8.UI.Win32.pdb" />
+      </fileset>
+      <fileset basedir="${Source.Dir}/NT8.UI.WPF/bin/${Configuration}" failonempty="true">
+        <include name="**" />
+        <exclude name="NT8.exe.config" />
+		<exclude name="NT8_Online_Help.chm" />
+		<exclude name="Revisions.txt" />
+      </fileset>
+    </zip>    <!-- Build the installer -->
+    <exec program="${NSIS.home}/makensis.exe" workingdir="${Source.Dir}/NT8.Installer/" commandline="/V2 Setup.nsi" />
+    <exec program="${Signtool.home}/signtool.exe" workingdir="${Source.Dir}/NT8.Installer" commandline="sign /f codesigncert.pfx /p lahore NT8_Setup.exe" />
+    <copy file="${Source.Dir}/NT8.Installer/NT8_Setup.exe" todir="${Staging.Dir}/${StarTeam.view}/Update" overwrite="true"/>
+  </target>
+
+  <target name="website.development" depends="init,distribute">
+    <nant buildfile="publishers.build" target="publish.website" inheritall="false" failonerror="false">
+      <properties>
+        <property name="Staging.Dir" value="${Staging.Dir}" />
+        <property name="StarTeam.view" value="${StarTeam.view}" />
+        <property name="Release.Type" value="Development" />
+      </properties>
+    </nant>
+  </target>
+
+  <target name="website.release" depends="init,distribute">
+    <nant buildfile="publishers.build" target="publish.website" inheritall="false" failonerror="false">
+      <properties>
+        <property name="Staging.Dir" value="${Staging.Dir}" />
+        <property name="StarTeam.view" value="${StarTeam.view}" />
+        <property name="Release.Type" value="Release" />
+      </properties>
+    </nant>
+  </target>
+</project>

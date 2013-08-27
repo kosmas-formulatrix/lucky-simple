@@ -1,0 +1,14 @@
+<project name="Formulatrix" default="bootstrap" basedir=".." xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd" >
+  <xmlpeek file="BuildTools/build.config" xpath="/configuration/appSettings/add[@key = 'StarTeam.home']/@value" property="StarTeam.home" />
+  <xmlpeek file="BuildTools/build.config" xpath="/configuration/appSettings/add[@key = 'StarTeam.url']/@value" property="StarTeam.url" />
+
+  <!-- loads the latest StarTeam URL, then transfers control over to it. -->
+  <target name="publish.nightlybuild">
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="co -is -o -p ${StarTeam.url}/BuildTools" />
+    <nant buildfile="BuildTools\default.build" target="publish.nightlybuild" inheritall="true" />
+  </target>
+  <target name="publish.releasebuild">
+    <exec program="${StarTeam.home}\stcmd.exe" commandline="co -is -o -p ${StarTeam.url}/BuildTools" />
+    <nant buildfile="BuildTools\default.build" target="publish.releasebuild" inheritall="true" />
+  </target>
+</project>

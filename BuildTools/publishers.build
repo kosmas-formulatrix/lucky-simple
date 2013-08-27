@@ -1,0 +1,10 @@
+<project name="Publishers">
+
+    <target name="publish.website">
+        <echo message="rem Copy to downloads folder" file="publish.bat" append="false" />
+        <echo file="publish.bat" append="true">copy /Y ${Staging.Dir}\${StarTeam.view}\Update\*.* c:\downloads\NT8\trunk\${Release.Type}\</echo>
+        <exec program="publish.bat" commandline="" />
+        <delete file="publish.bat" />
+    </target>
+
+</project>
