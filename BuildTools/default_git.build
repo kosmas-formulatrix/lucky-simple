@@ -6,13 +6,9 @@
   <target name="init">
     <tstamp />
 
-    <!-- StarTeam configuration -->
-
     <!-- Build directories -->
 
     <mkdir dir="${CCNetArtifactDirectory}" />
-
-	<!-- git test blank maju lagi 2-->	
 
     <!-- Build configuration -->
 
@@ -26,195 +22,21 @@
     <echo message="" />
   </target>
 
-  <target name="nightlybuild" depends="updateversion,buildlatest" />
-
-  <target name="publish.nightlybuild" depends="nightlybuild,distribute,website.development" />
-  <target name="publish.releasebuild" depends="nightlybuild,distribute,website.release" />
+  <target name="nightlybuild" depends="updateversion" />
 
   <target name="updateversion" depends="init">
     <echo message="updating version ..." />
-    <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${CCNetWorkingDirectory}/NT8.UI.Win32/Properties/AssemblyInfo.cs -o ${CCNetWorkingDirectory}/NT8.UI.Win32/Properties/AssemblyInfo.cs" />
-    <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${CCNetWorkingDirectory}/NT8.UI.Win32/Properties/AssemblyInfo.cs -w " output="${CCNetWorkingDirectory}/nextRelease.txt"/>
-    <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${CCNetWorkingDirectory}/NT8.UI.WPF/Properties/AssemblyInfo.cs -o ${CCNetWorkingDirectory}/NT8.UI.WPF/Properties/AssemblyInfo.cs" />
+    <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${CCNetWorkingDirectory}/AssemblyInfo.cs -o ${CCNetWorkingDirectory}/AssemblyInfo.cs" />
+    <exec program="C:/WINDOWS/UpdateVersion.exe" commandline="-b Fixed -r Increment -i ${CCNetWorkingDirectory}/AssemblyInfo.cs -w " output="${CCNetWorkingDirectory}/nextRelease.txt"/>
   </target>
 
-  <target name="buildlatest" depends="init" description="Builds the latest source from StarTeam.">
-    <call target="clean" />
-    
-    <call target="build" />
-  </target>
-
-  <target name="build" depends="init,NT8" description="Builds all source on drive."  />
-
-  <target name="distribute" depends="init,dist.products" description="Builds fresh install / upgrade scripts for all products."  />
-
-  <target name="clean" depends="init" description="Delete all previously compiled binaries.">
-    <delete>
-      <fileset basedir="${CCNetWorkingDirectory}">
-        <include name="**/bin/**" />
-        <include name="**/obj/**" />
-        <include name="**/${Configuration}/**" />
-        <exclude name="**/Includes/**" />
-      </fileset>
-    </delete>
-    <delete>
-      <fileset basedir="${CCNetArtifactDirectory}">
-        <include name="Virgin/**" />
-        <include name="Update/**" />
-        <include name="Release/**" />
-        <include name="Source/**" />
-      </fileset>
-    </delete>
-  </target>
-
-  <target name="deepclean" depends="init" description="Remove all files under the Formulatrix directory.">
-    <delete includeemptydirs="true">
-      <fileset basedir="${CCNetWorkingDirectory}" defaultexcludes="false">
-        <include name="**" />
-        <exclude name="BuildTools/**" />
-      </fileset>
-    </delete>
-    <delete includeemptydirs="true">
-      <fileset basedir="${CCNetArtifactDirectory}" defaultexcludes="false">
-        <include name="Virgin/**" />
-        <include name="Update/**" />
-        <include name="Release/**" />
-        <include name="Source/**" />
-      </fileset>
-    </delete>
-  </target>
 
 	<target name="PushBack" depends="init">
 		<exec program="git.exe" commandline="checkout SW_NT8-${CCNetLabel}" />
 		<exec program="git.exe" commandline="branch -f ${Git.branch} HEAD" />
-		<exec program="git.exe" commandline="rev-parse HEAD" output="${CCNetWorkingDirectory}/LatestChangeset.txt" />
-		<loadfile
-			file="${CCNetWorkingDirectory}/LatestChangeset.txt"
-			property="Temp" />
-		<property name="LatestChangeset" value="${string::trim-end(Temp)}" />
-			
-
-		<xmlpoke
-			file="C:/Program Files (x86)/CruiseControl.NET/server/${CCNetProject}.state"
-			xpath="/IntegrationResult/SourceControl[@name = 'commit']/@value"
-			value="${LatestChangeset}" />
-		<if test="${not string::contains(CCNetBuildCondition, 'Force')}">
-			<xmlpoke
-				file="C:/Program Files (x86)/CruiseControl.NET/server/${CCNetProject}.state"
-				xpath="/IntegrationResult/Parameters/NameValuePair[@name = '$LastChangeNumber']/@value"
-				value="${LatestChangeset}" />
-		</if>
 		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
-		<touch file="C:/Program Files (x86)/CruiseControl.NET/server/ccnet.config" />
-  </target>
-
-  <target name="NT8" depends="init" description="Build NT8.">
-    <msbuild project="${CCNetWorkingDirectory}/NT8.sln">
-      <arg value="/p:Configuration=${Configuration}" />
-    </msbuild>
-    <!-- NUnit SCRIPT 
-    <if test="${file::exists(NUnitProjectFile)}">
-      <exec program="${NUnitExecutable}" workingdir="${CCNetArtifactDirectory}" >
-        <arg value="${NUnitProjectFile}" />
-        <arg value="/xml:${NUnitResultFile}" />
-        <arg value="/nologo" />
-      </exec>
-    </if>-->
-    <!-- NCover SCRIPT 
-    <if test="${file::exists(NCoverProjectFile)}">
-      <exec program="${NCoverExecutable}" workingdir="${CCNetArtifactDirectory}">
-        <arg value="//cr" />
-        <arg value="${NCoverProjectFile}" />
-      </exec>
-      <exec program="${NCoverExplorerExecutable}" workingdir="${CCNetArtifactDirectory}">
-        <arg value="${NCoverCoverageFile}" />
-        <arg value="/x:${NCoverExplorerResultFile}" />
-        <arg value="/r:ModuleClassFunctionSummary" />
-        <arg value="/p:Formulatrix.Common" />
-      </exec>
-    </if>-->
-    <!--SOURCE MONITOR SCRIPT #
-    <echo message="Alternative 1: NANT Create-Checkpoint-Alternative-1"/>
-    <copy file="C:\SourceMonitorParser\TestProject.Smp" tofile="${CCNetArtifactDirectory}\TestProject.Smp" overwrite="true"/>
-    <copy file="C:\SourceMonitorParser\SMCommand.xml" tofile="${CCNetArtifactDirectory}\Command.xml" overwrite="true">
-      <filterchain>
-        <replacetokens>
-          <token key="PROJECT_FILE" value="${CCNetArtifactDirectory}\TestProject.Smp" />
-          <token key="SOURCE_DIRECTORY" value="${CCNetWorkingDirectory}" />
-          <token key="CHECKPOINT_NAME" value="Baseline" />
-          <token key="EXPORT_FILE_TO" value="${SMResultFile}" />
-        </replacetokens>
-      </filterchain>
-    </copy>
-    <if test="${file::exists(SMExecutable)}">
-      <exec program="${SMExecutable}" workingdir=".">
-        <arg value="/C" />
-        <arg value="${CCNetArtifactDirectory}\Command.xml" />
-      </exec>
-      <delete file="${CCNetArtifactDirectory}\Command.xml"/>
-      <delete file="${CCNetArtifactDirectory}\TestProject.Smp"/>
-      <exec program="${SMReportParserExecutable}">
-        <arg value="/C"/>
-        <arg value="${SMResultFile}"/>
-        #Put Complexity Threshold value here #
-        <arg value="/CT:10"/>
-        #Put Statements Threshold value here #
-        <arg value="/ST:80"/>
-        #Put value of N to generate N-Most Complex Method here #
-        <arg value="/NC:25"/>
-        #Put value of N to generate N-Longest Method here # 
-        <arg value="/NS:25"/>
-      </exec>
-	  -->
-      <!-- END of SOURCE MONITOR SCRIPT 
-    </if>-->
-  </target>
-
-  <target name="dist.products" depends="init,NT8" description="Create setup package.">
-    <mkdir dir="${CCNetArtifactDirectory}/Update" />
-    <zip zipfile="${CCNetArtifactDirectory}/Update/NT8.zip">
-      <fileset basedir="${CCNetWorkingDirectory}/NT8.UI.Win32/bin/${Configuration}" failonempty="true">
-        <include name="NT8.UI.Win32.exe" />
-        <include name="NT8.UI.Win32.pdb" />
-        <include name="NT8.UI.Win32.exe.config" />
-      </fileset>
-	  <fileset basedir="${CCNetWorkingDirectory}/NT8.UI.WPF/bin/${Configuration}" failonempty="true">
-        <include name="**" />
-      </fileset>
-    </zip>
-	<zip zipfile="${CCNetArtifactDirectory}/Update/NT8_bin_only.zip">
-      <fileset basedir="${CCNetWorkingDirectory}/NT8.UI.Win32/bin/${Configuration}" failonempty="true">
-        <include name="NT8.UI.Win32.exe" />
-        <include name="NT8.UI.Win32.pdb" />
-      </fileset>
-      <fileset basedir="${CCNetWorkingDirectory}/NT8.UI.WPF/bin/${Configuration}" failonempty="true">
-        <include name="**" />
-        <exclude name="NT8.exe.config" />
-		<exclude name="NT8_Online_Help.chm" />
-		<exclude name="Revisions.txt" />
-      </fileset>
-    </zip>    <!-- Build the installer -->
-    <exec program="${NSIS.home}/makensis.exe" workingdir="${CCNetWorkingDirectory}/NT8.Installer/" commandline="/V2 Setup.nsi" />
-    <exec program="${Signtool.home}/signtool.exe" workingdir="${CCNetWorkingDirectory}/NT8.Installer" commandline="sign /f codesigncert.pfx /p lahore NT8_Setup.exe" />
-    <copy file="${CCNetWorkingDirectory}/NT8.Installer/NT8_Setup.exe" todir="${CCNetArtifactDirectory}/Update" overwrite="true"/>
-  </target>
-
-  <target name="website.development" depends="init,distribute">
-    <nant buildfile="publishers.build" target="publish.website" inheritall="false" failonerror="false">
-      <properties>
-		<property name="CCNetWorkingDirectory" value="${CCNetWorkingDirectory}" />
-		<property name="CCNetArtifactDirectory" value="${CCNetArtifactDirectory}" />
-		<property name="Configuration" value="${Configuration}" />
-		<property name="CCNetProject" value="${CCNetProject}" />
-
-        <property name="Staging.Dir" value="${CCNetArtifactDirectory}" />
-        <property name="Git.branch" value="${Git.branch}" />
-        <property name="Release.Type" value="Development" />
-      </properties>
-    </nant>
-  </target>
-
-  <target name="website.release" depends="init,distribute">
+	</target>
+ 
     <nant buildfile="publishers.build" target="publish.website" inheritall="false" failonerror="false">
       <properties>
 		<property name="CCNetWorkingDirectory" value="${CCNetWorkingDirectory}" />
