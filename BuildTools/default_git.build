@@ -47,8 +47,8 @@
 		<touch file="C:/Program Files (x86)/CruiseControl.NET/server/ccnet.config" />	
 	</target>
 	
-	<target name="pushBack2" depends="init">
-		<!--
+	<target name="backup" depends="init">
+		<!-- sekalian test modification
 		<exec program="git.exe" commandline="checkout ${Git.branch}" />
 		<exec program="git.exe" commandline="pull origin ${Git.branch}" />
 		<exec program="git.exe" commandline="status" /> -->
