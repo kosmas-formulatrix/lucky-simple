@@ -35,7 +35,8 @@
 	
 		<exec program="git.exe" commandline="checkout ${Git.branch}" />
 		<exec program="git.exe" commandline="pull origin ${Git.branch}" />
-		<exec program="git.exe" commandline="commit -am &quot;Update to version ${CCNetLabel}&quot;" />
+		<exec program="git.exe" commandline="status" />
+		<!-- exec program="git.exe" commandline="commit -am &quot;Update to version ${CCNetLabel}&quot;" / -->
 		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
 <!--
 		<exec program="git.exe" commandline="checkout LuckySimple-${CCNetLabel}" failonerror="false" />
