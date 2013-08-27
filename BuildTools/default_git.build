@@ -1,4 +1,4 @@
-<project name="Formulatrix" default="products" xmlns="http://nant.sf.net/release/0.85/nant.xsd" >
+<project name="KosmasTest" default="products" xmlns="http://nant.sf.net/release/0.85/nant.xsd" >
 
   <!-- Framework version -->
   <property name="nant.settings.currentframework" value="net-3.5" />
@@ -32,22 +32,10 @@
 
 
 	<target name="PushBack" depends="init">
-		<exec program="git.exe" commandline="checkout SW_NT8-${CCNetLabel}" />
+		<exec program="git.exe" commandline="checkout LuckySimple-${CCNetLabel}" failonerror="false" />
 		<exec program="git.exe" commandline="branch -f ${Git.branch} HEAD" />
 		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
 	</target>
  
-    <nant buildfile="publishers.build" target="publish.website" inheritall="false" failonerror="false">
-      <properties>
-		<property name="CCNetWorkingDirectory" value="${CCNetWorkingDirectory}" />
-		<property name="CCNetArtifactDirectory" value="${CCNetArtifactDirectory}" />
-		<property name="Configuration" value="${Configuration}" />
-		<property name="CCNetProject" value="${CCNetProject}" />
-
-        <property name="Staging.Dir" value="${CCNetArtifactDirectory}" />
-        <property name="Git.branch" value="${Git.branch}" />
-        <property name="Release.Type" value="Release" />
-      </properties>
-    </nant>
   </target>
 </project>
