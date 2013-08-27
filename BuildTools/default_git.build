@@ -36,7 +36,7 @@
 	<target name="pushVersion" depends="init">
 		<exec program="git.exe" commandline="commit -am &quot;Updating version ${CCNetLabel} &quot;" />
 		<exec program="git.exe" commandline="push origin HEAD:${Git.branch}" />
-		<exec program="git.exe" commandline="rev-parse HEAD" resultproperty="LatestChangeset" />
+		<exec program="git.exe" commandline="rev-parse HEAD" resultproperty="${LatestChangeset}" />
 		
 		<echo message="***************    RESULT  = ${LatestChangeset}" />
 		<!--
