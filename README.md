@@ -1,2 +1,2 @@
-sadohsaofhsoaifhoiashfoisajfosajflksajf
+
 Percobaan menggunakan fetch
