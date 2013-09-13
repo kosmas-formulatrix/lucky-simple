@@ -3,6 +3,7 @@
 
 
 	<target name="checkDepLib">
+		<property name="Common.branch" value="branchA" />
 		<call target="isModifiedStartTeam"/>
 		<if test="${bool::parse(needLibraryBuild)}">
 			<call target="checkoutLib"/>
@@ -13,15 +14,14 @@
 		<exec program="git.exe" commandline="fetch -v --dry-run " output="hasChanges.tmp" />
 		<property name="result" value="True" />
 		<foreach item="Line" in="hasChanges.tmp" property="theline" if="${result}">
-			<echo message="1#: ${result}"/>
 			<property name="checkBranch" value="${string::contains(theline, '->')}" />
+			<property name="checkBranch" value="${string::contains(theline, Common.branch)}" if="${checkBranch}" />
+			<echo message="Branches : ${theline} " if="${result and checkBranch}"/>
 			<property name="result" value="${string::contains(theline, 'up to date')}" if="${result and checkBranch}" ></property>
-			<echo message="2#: ${result}"/>
 		</foreach>
-		<echo message="# : ${result}"/>
+		<!-- <exec program="git.exe" commandline="clean -f -x -d"/> -->
 		<property name="needLibraryBuild" value="${result=='False'}" />
-		<echo message="File is modified : ${needLibraryBuild}"/>
-		<exec program="git.exe" commandline="clean -f -x -d"/>
+		<echo message="Changes detected in the remote repository : ${bool::parse(needLibraryBuild)}"/>
 	</target>
 	
 	<target name="checkoutLib">
