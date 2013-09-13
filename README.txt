@@ -1,2 +1,3 @@
 
 Percobaan menggunakan fetch
+asjlkdaslkdj
