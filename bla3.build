@@ -4,11 +4,21 @@
 
 	
 	<target name="isModifiedStartTeam">
-		<exec program="git.exe" commandline="fetch" output="hasChanges.tmp" />
+		<exec program="git.exe" commandline="fetch -v --dry-run " output="hasChanges.tmp" />
+		<loadfile file="hasChanges.tmp" property="Temp" />
+		<foreach item="Line" in="hasChanges.tmp" property="theline">
+			<echo message="#####--   the line is :${theline}" />
+			<property name="checkBranch" value="${string::contains(theline, '->')}"></property>
+			<echo message="this is branch, checking up to date " if ="${checkBranch}"/>		
+			<property name="result" value="${string::contains(theline, 'up to date')}"></property>
+			<echo message="Line : ${theline} ##### Status : ${result}"/>		
+		</foreach>
+		<!-- 
+		<exec program="git.exe" commandline="pull" output="hasChanges.tmp" />
 		<loadfile file="hasChanges.tmp" property="Temp" />
 		
 		<property name="needLibraryBuild" value="${string::get-length(Temp)=0}"></property>
-		<echo message="File is modified" if ="${needLibraryBuild}"/>		
+		<echo message="File is modified" if ="${needLibraryBuild}"/>		 -->
 	</target>
 	
 
