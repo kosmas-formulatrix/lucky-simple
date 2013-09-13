@@ -1,0 +1,2 @@
+
+Percobaan menggunakan fetch
