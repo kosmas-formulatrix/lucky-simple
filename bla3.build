@@ -1,0 +1,15 @@
+<!--EXTERNAL_PROPERTIES: StarTeam.home;StarTeam.url;resultStarTeam;Dependency.Library.Url-->
+<project xmlns="http://nant.sf.net/release/0.86-beta1/nant.xsd" name="FormulatrixDependentLib">	
+
+
+	
+	<target name="isModifiedStartTeam">
+		<exec program="git.exe" commandline="fetch" output="hasChanges.tmp" />
+		<loadfile file="hasChanges.tmp" property="Temp" />
+		
+		<property name="needLibraryBuild" value="${string::get-length(Temp)=0}"></property>
+		<echo message="File is modified" if ="${needLibraryBuild}"/>		
+	</target>
+	
+
+</project>
