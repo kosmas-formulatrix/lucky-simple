@@ -2,24 +2,30 @@
 <project xmlns="http://nant.sf.net/release/0.86-beta1/nant.xsd" name="FormulatrixDependentLib">	
 
 
+	<target name="checkDepLib">
+		<call target="isModifiedStartTeam"/>
+		<if test="${bool::parse(needLibraryBuild)}">
+			<call target="checkoutLib"/>
+		</if>
+	</target>
 	
 	<target name="isModifiedStartTeam">
 		<exec program="git.exe" commandline="fetch -v --dry-run " output="hasChanges.tmp" />
-		<loadfile file="hasChanges.tmp" property="Temp" />
-		<foreach item="Line" in="hasChanges.tmp" property="theline">
-			<echo message="#####--   the line is :${theline}" />
-			<property name="checkBranch" value="${string::contains(theline, '->')}"></property>
-			<echo message="this is branch, checking up to date " if ="${checkBranch}"/>		
-			<property name="result" value="${string::contains(theline, 'up to date')}"></property>
-			<echo message="Line : ${theline} ##### Status : ${result}"/>		
+		<property name="result" value="True" />
+		<foreach item="Line" in="hasChanges.tmp" property="theline" if="${result}">
+			<echo message="1#: ${result}"/>
+			<property name="checkBranch" value="${string::contains(theline, '->')}" />
+			<property name="result" value="${string::contains(theline, 'up to date')}" if="${result and checkBranch}" ></property>
+			<echo message="2#: ${result}"/>
 		</foreach>
-		<!-- 
-		<exec program="git.exe" commandline="pull" output="hasChanges.tmp" />
-		<loadfile file="hasChanges.tmp" property="Temp" />
-		
-		<property name="needLibraryBuild" value="${string::get-length(Temp)=0}"></property>
-		<echo message="File is modified" if ="${needLibraryBuild}"/>		 -->
+		<echo message="# : ${result}"/>
+		<property name="needLibraryBuild" value="${result=='False'}" />
+		<echo message="File is modified : ${needLibraryBuild}"/>
+		<exec program="git.exe" commandline="clean -f -x -d"/>
 	</target>
 	
+	<target name="checkoutLib">
+		<exec program="git.exe" commandline="pull"/>
+	</target>
 
 </project>
