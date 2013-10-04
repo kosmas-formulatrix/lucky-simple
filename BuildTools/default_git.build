@@ -39,6 +39,11 @@
 	</target>
 	
 	<target name="PushBack" depends="init">
+		<!-- <exec program="git.exe" commandline="checkout -f ${Git.branch}" />
+		<exec program="git.exe" commandline="reset fetch --all" />
+		<exec program="git.exe" commandline="reset --hard origin/${Git.branch}" /> -->
+		
+		<exec program="git.exe" commandline="branch -f ${Git.branch} HEAD" />
 		<exec program="git.exe" commandline="rev-parse HEAD" output="${CCNetWorkingDirectory}/LatestChangeset.txt" />
 		<loadfile file="${CCNetWorkingDirectory}/LatestChangeset.txt" property="Temp" />
 		<property name="LatestChangeset" value="${string::trim-end(Temp)}" />
