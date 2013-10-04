@@ -1,7 +1,3 @@
-ajsdjfkljasflk
+This is read me.
 
-adklsfjksf
-
-
-dhflsakjflksajflksaflksadjf:wq
-
+Try to add real readme, but this is only for trial.
